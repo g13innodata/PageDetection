@@ -1,4 +1,6 @@
 import xml.etree.ElementTree as ET
+import re
+from .number_helper import NumberHelper
 
 class Word:
     def __init__(self, word_element: ET.Element):
@@ -7,7 +9,13 @@ class Word:
         self.y2 = int(coords[1])
         self.x2 = int(coords[2])
         self.y1 = int(coords[3])
-        self.text = word_element.text
+        self.text = word_element.text.strip()
+        self.is_page_candidate = False
+        if len(self.text) <= 5:
+            if NumberHelper.is_valid_roman_numeral(self.text):
+                self.is_page_candidate = True
+            elif bool(re.search(r'\d', self.text)):
+                self.is_page_candidate = True
 
     def has_inteterferring_text_upwards(self, word_list):
         for word in word_list:

@@ -18,9 +18,46 @@ class Book:
             object_.extract_words()
             object_.extract_possible_page_numbers()
             self.object_list.append(object_)
+            #print(object_.leaf_number, " = ", object_.texts_lower())
+
         self.__perform_temporary_prediction()
         self.__perform_fillup_gaps_arabic()
         self.__perform_fillup_roman_numerals()
+        self.__perform_fillup_numeric_blanks()
+        self.__perform_fillup_reverse()
+        self.__perform_fillup_no_page_numbers()
+        self.__perform_remove_middle_lower_values()
+
+
+        #for object_ in self.object_list:
+        #    print(object_.leaf_number, "=", object_.predicted_page_temp)
+
+    # For pages such as 119,120,121,123,4,5,6,127,128,129,130,131
+    # Set the middle to blank and process again blank numbers
+    def __perform_remove_middle_lower_values(self):
+        match_sequence_count = 0
+        CONFIDENCE_COUNT = 5
+        base_page = 0
+        for x in range(0, len(self.object_list)):
+            current_page = self.object_list[x].predicted_page_temp
+            if x < len(self.object_list)-1:
+                next_page = self.object_list[x+1].predicted_page_temp
+            else:
+                next_page = self.object_list[x].predicted_page_temp
+            if match_sequence_count < CONFIDENCE_COUNT:
+                if current_page.isnumeric() and next_page.isnumeric():
+                    if int(current_page) == int(next_page)-1:
+                        match_sequence_count += 1
+                else:
+                    match_sequence_count = 0
+            if match_sequence_count == CONFIDENCE_COUNT and current_page.isnumeric():
+                if int(current_page) > base_page:
+                    base_page = int(current_page)
+                if base_page > int(current_page):
+                    self.object_list[x].predicted_page_temp = ""
+        self.__perform_fillup_numeric_blanks()
+        self.__perform_fillup_reverse()
+
 
     # Perform temporary prediction, filling up objects (predicted_page_temp and
     # expected_next_printed_page).
@@ -40,6 +77,22 @@ class Book:
                     blank_end = -1
         if blank_start != -1:
             self.blank_gap_dictionary[blank_start] = blank_end + 1
+
+    # Reverse in case of page number prior is higher than the current.
+    # Ex: 26,27,28,26,27,28 (the 28 in between should be handled)
+    def __perform_fillup_reverse(self):
+        for i in range(len(self.object_list) - 3, 1, -1):
+            previous_previous_page = self.object_list[i - 2].predicted_page_temp
+            previous_page = self.object_list[i-1].predicted_page_temp
+            current_page = self.object_list[i].predicted_page_temp
+            if previous_page.isnumeric() and current_page.isnumeric() and previous_previous_page.isnumeric():
+                if int(previous_page) > int(current_page) and int(current_page) > 1:
+                    possible_expected_previous_page = str(int(current_page) - 1)
+                    possible_expected_previous_previous_page = str(int(current_page) - 2)
+                    if possible_expected_previous_page in self.object_list[i-1].texts() \
+                            or possible_expected_previous_previous_page in self.object_list[i - 2].texts():
+                        self.object_list[i - 1].predicted_page_temp = possible_expected_previous_page
+
 
     def __perform_fillup_gaps_arabic(self):
         matched_keys = []
@@ -63,9 +116,15 @@ class Book:
 
         # fill blank pages copy candidate page if match with last printed temp page
         objects_ = self.get_empty_predicted_temp_with_candidates()
+
         self.fill_up_empty_temp_pages_with_candidate_page(objects_)
+
+
         objects_ = self.get_empty_predicted_temp()
+
         self.fill_up_empty_temp_pages(objects_)
+
+
 
         for key in self.blank_gap_dictionary:
             blank_start = key
@@ -100,6 +159,22 @@ class Book:
                 prev_page = int(prev_object.predicted_page_temp)
                 if page < prev_page:
                     self.object_list[object_.leaf_number-1].predicted_page_temp = str(prev_page + 1)
+
+
+    def __perform_fillup_numeric_blanks(self):
+        last_printed = ""
+        for x in range(1, len(self.object_list)):
+            if self.object_list[x].predicted_page_temp == "" and last_printed.isnumeric():
+                next_printed = int(last_printed) + 1
+                self.object_list[x].predicted_page_temp = str(next_printed)
+            last_printed = self.object_list[x].predicted_page_temp
+
+    """def __perform_fillup_numeric_blanks1(self):
+        last_printed = self.object_list[self.last_blank_start-1].predicted_page_temp
+        if last_printed.isnumeric():
+            for x in range(self.last_blank_start, len(self.object_list)):
+                last_printed = int(last_printed) + 1
+                self.object_list[x].predicted_page_temp = str(last_printed)"""
 
     def __perform_fillup_roman_numerals(self):
         blank_end = 0
@@ -149,9 +224,6 @@ class Book:
     # Fill up temp page that are empty that's having candidate page
     def fill_up_empty_temp_pages_with_candidate_page(self, objects_: []):
         for object_ in objects_:
-            if object_.leaf_number == 51:
-                xxxx = 9
-
             blank_start = object_.leaf_number
             if object_.candidate_printed_page is None:
                 continue
@@ -165,18 +237,19 @@ class Book:
                 if current_page >= 1:
                     for i in range(blank_start - 1, 0, -1):
                         last_object = self.get_object_object_by_leafnumber(i)
-                        if last_object.predicted_page_temp is not None:
+                        if last_object is not None:
+                            if last_object.predicted_page_temp is not None:
 
-                            if last_object.predicted_page_temp != '':
-                                total_blanks += 1
+                                if last_object.predicted_page_temp != '':
+                                    total_blanks += 1
 
-                            if last_object.predicted_page_temp != '':
-                                last_prediction_found = True
-                                break
+                                if last_object.predicted_page_temp != '':
+                                    last_prediction_found = True
+                                    break
 
                     if last_prediction_found:
                         last_page = int(last_object.predicted_page_temp)
-                        if current_page - last_page == total_blanks:
+                        if (current_page - last_page) + 1 == total_blanks:
                             if not self.is_page_exists(blank_start, current_page):
                                 self.object_list[blank_start - 1].predicted_page_temp = str(current_page)
 
@@ -187,17 +260,31 @@ class Book:
             last_object = None
             for i in range(object_.leaf_number - 1, 0, -1):
                 last_object = self.get_object_object_by_leafnumber(i)
-                if last_object.predicted_page_temp is not None:
-                    if last_object.predicted_page_temp != '':
-                        total_pages += 1
+                if last_object is not None:
+                    if last_object.predicted_page_temp is not None:
                         if last_object.predicted_page_temp != '':
-                            break
+                            total_pages += 1
+                            if last_object.predicted_page_temp != '':
+                                break
 
-            if last_object is not None and total_pages != 0:
+            if last_object is not None and total_pages != 0 and object_.leaf_number-1<last_object.leaf_number:
                 if last_object.predicted_page_temp.isnumeric():
                     current_page = str(int(last_object.predicted_page_temp) + total_pages)
                     if not self.is_page_exists(object_.leaf_number, current_page):
-                        self.object_list[object_.leaf_number-1].predicted_page_temp = current_page
+                        if object_.leaf_number < len(self.object_list)-1:
+                            self.object_list[object_.leaf_number-1].predicted_page_temp = current_page
+
+    # This will fill up sequencial numbers in case, all pages don't have page numbers at all
+    def __perform_fillup_no_page_numbers(self):
+        all_blanks = True
+        for object in self.object_list:
+            if object.predicted_page_temp != "":
+                all_blanks = False
+                break
+        else:
+            for o in self.object_list:
+                o.predicted_page_temp = str(o.leaf_number)
+
 
     # filter dictionary that are not empty
     def get_dictionary_not_empty(self, dic_list: {}):
@@ -269,9 +356,6 @@ class Book:
                 json.loads(json.dumps({"leafNum": object_.leaf_number, "pageNumber": object_.predicted_page_temp})))
             # print(object_.leaf_number,object_.texts())
 
-        accuracy = 100.00
-        if len(check_leaf) > 0:
-            accuracy = (1 - (len(check_leaf) / len(self.object_list))) * 100
 
         mis_matched = 0
         total_scandata = 0
@@ -282,9 +366,22 @@ class Book:
                 mis_matched += 1
             else:
                 scanned_mismatches\
-                    .append("leafno["+ str(key) +"] scandata \"" + scan_data.leaf_page_dictionary[key] + "\" output\"" + output_val + "\"")
-
+                    .append("leafno["+ str(key) +"] scandata [" + scan_data.leaf_page_dictionary[key]
+                            + "] output [" + output_val
+                            + "] ocr_value [" + ','.join([str(txt) for txt in self.object_list[int(key)-1].texts()])
+                            + "]")
             total_scandata += 1
+
+        accuracy = 100.00
+
+        # if there are mismatches against the scanned_data, use it as accuracy computation
+        if len(self.object_list) > 0:
+            if len(scanned_mismatches) > 0 or len(scan_data.leaf_page_dictionary) > 0:
+                accuracy = (1 - (len(scanned_mismatches) / len(self.object_list))) * 100
+            elif len(check_leaf) > 0:
+                accuracy = (1 - (len(check_leaf) / len(self.object_list))) * 100
+        else:
+            accuracy = 0
 
         # scanned_accuracy = (mis_matched / total_scandata) * 100
         json_data = {
@@ -295,7 +392,7 @@ class Book:
             "scandataOutputMismatched": scanned_mismatches,
             "pages": json_pages
         }
-        with open(json_filename, 'w') as f:
-            json.dump(json_data, f, ensure_ascii=False)
+        with open(json_filename, 'w', encoding='utf-8') as f:
+            json.dump(json_data, f, ensure_ascii=False, indent=4)
 
         print(f"Successfully saved as [{json_filename}] with accuracy of {accuracy}%.")

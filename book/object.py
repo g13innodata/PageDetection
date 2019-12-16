@@ -4,6 +4,8 @@ from .words import Word
 
 from .number_helper import NumberHelper
 
+# updates:
+# Nov 28: Eliminate non-numeric and non-roman words
 
 class Object:
     def __init__(self, object_element: ET.Element):
@@ -35,9 +37,11 @@ class Object:
         max_y1: int = 0
         for word_element in self.object_element.iter('WORD'):
             word = Word(word_element)
-            min_y2 = word.y2 if word.y2 < min_y2 else min_y2
-            max_y1 = word.y1 if word.y1 > max_y1 else max_y1
-            self.word_list.append(word)
+            if word.is_page_candidate:
+                min_y2 = word.y2 if word.y2 < min_y2 else min_y2
+                max_y1 = word.y1 if word.y1 > max_y1 else max_y1
+                self.word_list.append(word)
+
         self.min_word_y2 = min_y2 if min_y2 != 100000 else 0
         self.max_word_y1 = max_y1
 
@@ -58,7 +62,7 @@ class Object:
             self.text_LM,
             self.text_LR
         ]
-        return list(filter(None, x))
+        return list(dict.fromkeys(filter(None, x)))
 
     def texts_lower(self):
         x = [
@@ -69,7 +73,7 @@ class Object:
             self.text_LM.lower(),
             self.text_LR.lower()
         ]
-        return list(filter(None, x))
+        return list(dict.fromkeys(filter(None, x)))
 
     def predict_page_printed_number(self, object_list):
         result = ""
@@ -87,7 +91,15 @@ class Object:
                 result = ""
         if not result and index > 0:
             previous_object = object_list[index-1]
-            self.candidate_printed_page = previous_object.get_next_candidate()
+            tmp = previous_object.get_next_candidate()
+            for text in self.texts():
+                if text.isnumeric():
+                    if text == tmp:
+                        result = text
+                        break
+            else:
+                self.candidate_printed_page = previous_object.get_next_candidate()
+
         self.predicted_page_temp = result
 
     def get_next_candidate(self):
@@ -121,14 +133,23 @@ class Object:
     # 1. Numeric but the number should be less than or equal to the leaf number
     # 2. Should have at least 1 numeric character or is a valid roman numeral
     def __filter_text(self,str):
-        result = str
+
+        result = str.replace('[', '').replace(']', '')
         if result.isnumeric():
             # validate if greater than the leaf number
             if int(result) > self.leaf_number or int(result) == 0:
                 result = ""
-        else:
-            if not self.__has_numeric_character(result) and not NumberHelper.is_valid_roman_numeral(result):
-                result = ""
+        elif not self.__has_numeric_character(result) and not NumberHelper.is_valid_roman_numeral(result):
+            result = ""
+        elif self.__has_numeric_character(result) and not NumberHelper.is_valid_roman_numeral(result):
+            result = result.replace('i', '1')
+            result = result.replace('l', '1')
+            result = result.replace('O', '0')
+            result = result.replace('o', '0')
+            result = result.replace('!', '1')
+
+
+
         result = result.strip()
         return result
 
