@@ -365,11 +365,18 @@ class Book:
             if scan_data.leaf_page_dictionary[key] == output_val:
                 mis_matched += 1
             else:
-                scanned_mismatches\
+                scanned_mismatches.append(json.loads(json.dumps(
+                {
+                    "leafNum": key,
+                    "scandataValue": scan_data.leaf_page_dictionary[key],
+                    "jsonOutput": output_val,
+                    "ocrExtractedValue": ','.join([str(txt) for txt in self.object_list[int(key)-1].texts()])
+                })))
+                '''scanned_mismatches\
                     .append("leafno["+ str(key) +"] scandata [" + scan_data.leaf_page_dictionary[key]
                             + "] output [" + output_val
                             + "] ocr_value [" + ','.join([str(txt) for txt in self.object_list[int(key)-1].texts()])
-                            + "]")
+                            + "]")'''
             total_scandata += 1
 
         accuracy = 100.00
