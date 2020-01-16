@@ -38,6 +38,7 @@ class Book:
         match_sequence_count = 0
         CONFIDENCE_COUNT = 5
         base_page = 0
+
         for x in range(0, len(self.object_list)):
             current_page = self.object_list[x].predicted_page_temp
             if x < len(self.object_list)-1:
@@ -402,4 +403,4 @@ class Book:
         with open(json_filename, 'w', encoding='utf-8') as f:
             json.dump(json_data, f, ensure_ascii=False, indent=4)
 
-        print(f"Successfully saved as [{json_filename}] with accuracy of {accuracy}%.")
+        print("Successfully saved as [" + json_filename + "] with accuracy of " + str(accuracy) + "%.")

@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import re
 from .number_helper import NumberHelper
 
+
 class Word:
     def __init__(self, word_element: ET.Element):
         coords = word_element.attrib["coords"].split(",")

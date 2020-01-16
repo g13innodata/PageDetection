@@ -58,7 +58,7 @@ def main(item: str, **kwargs):
             return
 
         if not os.path.isdir(ia_path):
-            print(f"Error: ia_path \"{ia_path}\" does not exist")
+            print("Error: ia_path \"" + ia_path + "\" does not exist")
             return
 
         item = xml_file_name.lower().replace("_djvu.xml", "")
@@ -67,7 +67,7 @@ def main(item: str, **kwargs):
         json_file_name = os.path.join(ia_path, json_file_name)
         # json_file_name = os.path.join(ia_path, item, json_file_name)
         if not os.path.isfile(xml_file_name):
-            print(f"Error: xml_filename \"{xml_file_name}\" does not exist")
+            print("Error: xml_filename \"" + xml_file_name + "\" does not exist")
             return
 
         if xml_file_name_scan_data is not None and xml_file_name_scan_data != "":
@@ -75,14 +75,14 @@ def main(item: str, **kwargs):
             xml_file_name_scan_data = os.path.join(ia_path, xml_file_name_scan_data)
             # xml_filename_scan_data = os.path.join(ia_path, item, xml_filename_scan_data)
             if not os.path.isfile(xml_file_name_scan_data):
-                print(f"Error: xml_filename_scandata \"{xml_file_name_scan_data}\" does not exist")
+                print("Error: xml_filename_scandata \"" + xml_file_name_scan_data + "\" does not exist")
                 return
 
     if not os.path.isfile(xml_file_name):
-        print(f"Downloading {item}_djvu.xml from internet archive website...")
+        print("Downloading " + item + "_djvu.xml from internet archive website...")
         download(item, verbose=True, destdir=ia_path, glob_pattern='*_djvu.xml')
 
-        print(f"Downloading {item}_scandata.xml from internet archive website...")
+        print("Downloading " + item + "_scandata.xml from internet archive website...")
         try:
             download(item, verbose=True, destdir=ia_path, glob_pattern='*_scandata.xml')
         except NameError:
@@ -90,7 +90,7 @@ def main(item: str, **kwargs):
 
     # Do auto printed page generation
     if os.path.isfile(xml_file_name):
-        print(f"Generating printed pages...")
+        print("Generating printed pages...")
         bk = Book(xml_file_name)
         scan_data = ScanData("")
         if xml_file_name_scan_data is not None:
@@ -99,7 +99,7 @@ def main(item: str, **kwargs):
 
         bk.generate_json(item, json_file_name, scan_data=scan_data)
     else:
-        print(f"Error: File not found [{xml_file_name}]!")
+        print("Error: File not found [" + xml_file_name + "]!")
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 from .words import Word
 
 from .number_helper import NumberHelper
+from collections import OrderedDict
 
 # updates:
 # Nov 28: Eliminate non-numeric and non-roman words
@@ -20,8 +21,8 @@ class Object:
         self.text_LL = ""
         self.text_LM = ""
         self.text_LR = ""
-        self.max_word_y1 = 0
-        self.min_word_y2 = 0
+        self.max_word_y1 = int(0)
+        self.min_word_y2 = int(0)
         self.sure_prediction = False
 
         param_page = object_element.find("PARAM[@name='PAGE']")
@@ -33,17 +34,17 @@ class Object:
 
     # extract all the WORD tags and put it in a list
     def extract_words(self):
-        min_y2: int = 100000
-        max_y1: int = 0
+        min_y2 = int(100000)
+        max_y1 = int(0)
         for word_element in self.object_element.iter('WORD'):
             word = Word(word_element)
             if word.is_page_candidate:
-                min_y2 = word.y2 if word.y2 < min_y2 else min_y2
-                max_y1 = word.y1 if word.y1 > max_y1 else max_y1
+                min_y2 = int(word.y2) if int(word.y2) < int(min_y2) else int(min_y2)
+                max_y1 = int(word.y1) if int(word.y1) > int(max_y1) else int(max_y1)
                 self.word_list.append(word)
 
-        self.min_word_y2 = min_y2 if min_y2 != 100000 else 0
-        self.max_word_y1 = max_y1
+        self.min_word_y2 = int(min_y2) if int(min_y2) != 100000 else 0
+        self.max_word_y1 = int(max_y1)
 
     def extract_possible_page_numbers(self):
         self.text_UL = self.__extract_text_UL()
@@ -62,7 +63,9 @@ class Object:
             self.text_LM,
             self.text_LR
         ]
-        return list(dict.fromkeys(filter(None, x)))
+
+        return list(OrderedDict((k, None) for k in x))
+        # return list(dict.fromkeys(filter(None, x)))
 
     def texts_lower(self):
         x = [
