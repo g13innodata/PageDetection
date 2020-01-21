@@ -1,8 +1,6 @@
 import os
 import sys
 import argparse
-from internetarchive import download
-
 from book.book import Book
 from book.scan_data import ScanData
 
@@ -79,6 +77,7 @@ def main(item: str, **kwargs):
                 return
 
     if not os.path.isfile(xml_file_name):
+        from internetarchive import download
         print("Downloading " + item + "_djvu.xml from internet archive website...")
         download(item, verbose=True, destdir=ia_path, glob_pattern='*_djvu.xml')
 
