@@ -362,7 +362,11 @@ class Book:
         total_scandata = 0
         scanned_mismatches = []
         for key in self.get_dictionary_not_empty(dic_list=scan_data.leaf_page_dictionary):
-            output_val = self.get_object_pagevalue_by_leafnumber(int(key))
+            # output_val = self.get_object_pagevalue_by_leafnumber(int(key))
+            cur_obj = self.get_object_object_by_leafnumber(int(key))
+            output_val = "" if cur_obj is None else cur_obj.predicted_page_temp
+            ocr_value = "" if cur_obj is None else ','.join([str(txt) for txt in cur_obj.texts()])
+
             if scan_data.leaf_page_dictionary[key] == output_val:
                 mis_matched += 1
             else:
@@ -371,7 +375,8 @@ class Book:
                     "leafNum": key,
                     "scandataValue": scan_data.leaf_page_dictionary[key],
                     "jsonOutput": output_val,
-                    "ocrExtractedValue": ','.join([str(txt) for txt in self.object_list[int(key)-1].texts()])
+                     "ocrExtractedValue": ocr_value
+                    # "ocrExtractedValue": ','.join([str(txt) for txt in self.object_list[int(key)-1].texts()])
                 })))
                 '''scanned_mismatches\
                     .append("leafno["+ str(key) +"] scandata [" + scan_data.leaf_page_dictionary[key]

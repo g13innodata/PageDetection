@@ -109,6 +109,7 @@ if __name__ == "__main__":
     parser.add_argument('-xml_filename_scandata', help="input scandata", required=False)
     parser.add_argument('-json_filename', help="json output", required=False)
     args = parser.parse_args()
+    # item = "bestplaysyearboo0000unse"
     item = args.item
     ia_path = args.ia_path
     xml_filename = args.xml_filename
