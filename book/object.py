@@ -27,10 +27,11 @@ class Object:
 
         param_page = object_element.find("PARAM[@name='PAGE']")
         if param_page is not None:
-            page_value = param_page.attrib["value"]
-            page_value = page_value[0:page_value.index(".")]
-            split_ = page_value.split("_")
-            self.leaf_number = int(split_[len(split_)-1])
+            if param_page != -1:
+                page_value = param_page.attrib["value"]
+                page_value = page_value[0:page_value.index(".")]
+                split_ = page_value.split("_")
+                self.leaf_number = int(split_[len(split_)-1])
 
     # extract all the WORD tags and put it in a list
     def extract_words(self):
@@ -151,8 +152,6 @@ class Object:
             result = result.replace('o', '0')
             result = result.replace('!', '1')
 
-
-
         result = result.strip()
         return result
 
@@ -160,6 +159,10 @@ class Object:
     def __extract_text_UL(self):
         result = ""
         min_x1 = 0
+
+        if self.leaf_number == 5:
+            min_x1 = 0
+
         if self.min_word_y2 > 0:
             for word in self.word_list:
                 if word.y1 <= self.min_word_y2 and (min_x1 == 0 or min_x1 < word.x1) \

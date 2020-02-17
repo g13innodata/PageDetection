@@ -13,12 +13,21 @@ class Book:
         self.object_list = []
         self.blank_gap_dictionary = {}
         self.last_blank_start = 0
+        expected_leaf_no = 1
         for object_element in root.iter('OBJECT'):
             object_ = Object(object_element)
             object_.extract_words()
             object_.extract_possible_page_numbers()
+            # Start: added 2/14
+            if object_.leaf_number != expected_leaf_no:
+                for i in range(expected_leaf_no, object_.leaf_number):
+                    t_object = Object("")
+                    t_object.leaf_number = i
+                    self.object_list.append(t_object)
+            # End: added 2/14
             self.object_list.append(object_)
-            #print(object_.leaf_number, " = ", object_.texts_lower())
+            expected_leaf_no = object_.leaf_number + 1
+            # print(object_.leaf_number, " = ", object_.texts_lower())
 
         self.__perform_temporary_prediction()
         self.__perform_fillup_gaps_arabic()
