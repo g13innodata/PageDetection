@@ -89,6 +89,9 @@ def main(item: str, **kwargs):
 
     # Do auto printed page generation
     if os.path.isfile(xml_file_name):
+        if os.path.exists(json_file_name):
+                os.remove(json_file_name)
+                
         print("Generating printed pages...")
         bk = Book(xml_file_name)
         scan_data = ScanData("")
@@ -109,7 +112,7 @@ if __name__ == "__main__":
     parser.add_argument('-xml_filename_scandata', help="input scandata", required=False)
     parser.add_argument('-json_filename', help="json output", required=False)
     args = parser.parse_args()
-    # item = "dieivaprilisinfe00cath"
+    #item = "b3187003x"
     item = args.item
     ia_path = args.ia_path
     xml_filename = args.xml_filename
