@@ -24,8 +24,20 @@ class Object:
         self.max_word_y1 = int(0)
         self.min_word_y2 = int(0)
         self.sure_prediction = False
+        self.confidence = 0
+        self.page_height = 0
+        self.page_height = 0
+        self.page_width = 0
 
         param_page = object_element.find("PARAM[@name='PAGE']")
+        try:
+            self.page_height = int(object_element.attrib["height"])
+        except:
+            pass
+        try:
+            self.page_width = int(object_element.attrib["width"])
+        except:
+            pass
         if param_page is not None:
             if param_page != -1:
                 page_value = param_page.attrib["value"]
@@ -44,8 +56,8 @@ class Object:
                 max_y1 = int(word.y1) if int(word.y1) > int(max_y1) else int(max_y1)
                 self.word_list.append(word)
 
-        self.min_word_y2 = int(min_y2) if int(min_y2) != 100000 else 0
-        self.max_word_y1 = int(max_y1)
+        self.min_word_y2 = int(min_y2) + 20 if int(min_y2) != 100000 else 0 #+20 is used for skewed images
+        self.max_word_y1 = int(max_y1) - 20 #-20 is used for skewed images
 
     def extract_possible_page_numbers(self):
         self.text_UL = self.__extract_text_UL()
@@ -64,9 +76,7 @@ class Object:
             self.text_LM,
             self.text_LR
         ]
-
-        return list(OrderedDict((k, None) for k in x))
-        # return list(dict.fromkeys(filter(None, x)))
+        return list(filter(None,OrderedDict((k, None) for k in x)))
 
     def texts_lower(self):
         x = [
@@ -87,7 +97,7 @@ class Object:
             for text in self.texts():
                 if text.isnumeric():
                     expected_next_printed_page = str(int(text) + 1)
-                    if self.__is_next_page_matched(object_list[next_index], expected_next_printed_page):
+                    if self.is_next_page_matched(object_list[next_index], expected_next_printed_page):
                         self.expected_next_printed_page = expected_next_printed_page
                         result = text
                         break
@@ -110,20 +120,23 @@ class Object:
         val = self.predicted_page_temp
         if not val:
             val = self.candidate_printed_page
-        if val is None:
+        if val == None:
             val = ""
         if val.isnumeric():
             return str(int(val) + 1)
         elif NumberHelper.is_valid_roman_numeral(val):
             return ""
 
-    def __is_next_page_matched(self, object, next_number):
-        for text in object.texts():
-            if text == next_number:
+    def is_next_page_matched(self, object, next_number):
+        result = False
+        if object.predicted_page_temp != "":
+            if object.predicted_page_temp == str(next_number):
                 result = True
-                break
         else:
-            result = False
+            for text in object.texts():
+                if text == next_number:
+                    result = True
+                    break
         return result
 
     def __has_numeric_character(self, str):
@@ -138,10 +151,18 @@ class Object:
     # 2. Should have at least 1 numeric character or is a valid roman numeral
     def __filter_text(self,str):
 
-        result = str.replace('[', '').replace(']', '')
+        result = str.replace('[', '') \
+            .replace(']', '') \
+            .replace('.','') \
+            .replace('.', '') \
+            .replace(';', '') \
+            .replace('*', '') \
+            .replace('(', '') \
+            .replace(')', '')
+
         if result.isnumeric():
             # validate if greater than the leaf number
-            if int(result) > self.leaf_number or int(result) == 0:
+            if int(result) == 0:
                 result = ""
         elif not self.__has_numeric_character(result) and not NumberHelper.is_valid_roman_numeral(result):
             result = ""
@@ -151,6 +172,10 @@ class Object:
             result = result.replace('O', '0')
             result = result.replace('o', '0')
             result = result.replace('!', '1')
+            result = result.replace('J', '9')
+
+        if not result.isnumeric() and not NumberHelper.is_valid_roman_numeral(result):
+            result = ""
 
         result = result.strip()
         return result
@@ -159,16 +184,19 @@ class Object:
     def __extract_text_UL(self):
         result = ""
         min_x1 = 0
-
-        if self.leaf_number == 5:
-            min_x1 = 0
+        min_y1 = self.page_height
+        if min_y1 == 0:
+            min_y1 = 1000
 
         if self.min_word_y2 > 0:
             for word in self.word_list:
                 if word.y1 <= self.min_word_y2 and (min_x1 == 0 or min_x1 < word.x1) \
                         and not word.has_inteterferring_text_upwards(self.word_list):
-                    result = word.text
-                    min_x1 = word.x1
+                    if self.page_width == 0 or (self.page_width > 0 and word.x1 <= self.page_width / 2):
+                        result = word.text
+                        min_x1 = word.x1
+                    else:
+                        pass
         result = self.__filter_text(result)
         return result
 
@@ -193,8 +221,9 @@ class Object:
                 if word.y1 <= self.min_word_y2 \
                         and (max_x2 == 0 or max_x2 > word.x2) \
                         and not word.has_inteterferring_text_upwards(self.word_list):
-                    result = word.text
-                    max_x2 = word.x2
+                    if self.page_width == 0 or (self.page_width>0 and word.x1 >= self.page_width / 2):
+                        result = word.text
+                        max_x2 = word.x2
         result = self.__filter_text(result)
         return result
 
@@ -207,8 +236,9 @@ class Object:
                 if word.y2 >= self.max_word_y1 \
                         and (min_x1 == 0 or min_x1 < word.x1) \
                         and not word.has_inteterferring_text_downwards(self.word_list):
-                    result = word.text
-                    min_x1 = word.x1
+                    if self.page_width == 0 or (self.page_width > 0 and word.x1 <= self.page_width / 2):
+                        result = word.text
+                        min_x1 = word.x1
         result = self.__filter_text(result)
         return result
 
@@ -233,7 +263,9 @@ class Object:
                 if word.y2 >= self.max_word_y1 \
                         and (max_x2 == 0 or max_x2 > word.x2) \
                         and not word.has_inteterferring_text_downwards(self.word_list):
-                    result = word.text
-                    max_x2 = word.x2
+                    if self.page_width == 0 or (self.page_width > 0 and word.x1 >= self.page_width / 2):
+                        result = word.text
+                        max_x2 = word.x2
+
         result = self.__filter_text(result)
         return result
