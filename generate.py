@@ -95,9 +95,9 @@ def main(item: str, **kwargs):
         print("Generating printed pages...")
         bk = Book(xml_file_name)
         scan_data = ScanData("")
-        if xml_file_name_scan_data is not None:
-            if os.path.isfile(xml_file_name_scan_data):
-                scan_data = ScanData(xml_file_name_scan_data)
+        #if xml_file_name_scan_data is not None:
+        #    if os.path.isfile(xml_file_name_scan_data):
+        #        scan_data = ScanData(xml_file_name_scan_data)
 
         bk.generate_json(item, json_file_name, scan_data=scan_data)
     else:
@@ -112,8 +112,8 @@ if __name__ == "__main__":
     parser.add_argument('-xml_filename_scandata', help="input scandata", required=False)
     parser.add_argument('-json_filename', help="json output", required=False)
     args = parser.parse_args()
-    #item = "b3187003x"
-    item = args.item
+    item = "appletonsannualc0007unse"
+    # item = args.item
     ia_path = args.ia_path
     xml_filename = args.xml_filename
     xml_filename_scandata = args.xml_filename_scandata
