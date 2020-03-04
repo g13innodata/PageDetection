@@ -5,7 +5,6 @@ from .object import Object
 from .number_helper import NumberHelper
 from .scan_data import ScanData
 
-
 class Book:
     def __init__(self, xml_filename):
         tree = ET.parse(xml_filename)
@@ -42,7 +41,7 @@ class Book:
         self.__perform_fillup_gaps_0_confidence()
         self.__perform_fillup_numeric_blanks()
         #rebuild confidence
-        self.__build_page_confidence()
+        #self.__build_page_confidence()
         #in a case no page numbers predicted at all, use the leaf number
         self.__perform_fillup_no_page_numbers()
         #self.__print_pages("After final prediction!")
@@ -412,9 +411,13 @@ class Book:
         json_pages = []
         check_leaf = []         # This is blank in between numbers and non-sequence numbers.
         for object_ in self.object_list:
+            confidence = 100
+            if object_.predicted_page_temp.isnumeric():
+                confidence = object_.confidence
             json_pages.append(
                 json.loads(json.dumps({"leafNum": object_.leaf_number,
                                        "ocr_value": object_.texts(),
+                                       "confidence": confidence,
                                        "pageNumber": object_.predicted_page_temp})))
             if object_.predicted_page_temp.isnumeric():
                 confidence = object_.confidence
@@ -438,6 +441,8 @@ class Book:
                             break
 
         check_leaf.sort()
+
+
         mis_matched = 0
         total_scandata = 0
         scanned_mismatches = []
