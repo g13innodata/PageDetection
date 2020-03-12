@@ -29,6 +29,9 @@ class Object:
         self.page_height = 0
         self.page_width = 0
 
+        self.debug_page = []
+        self.debug_conf = []
+
         param_page = object_element.find("PARAM[@name='PAGE']")
         try:
             self.page_height = int(object_element.attrib["height"])
@@ -89,20 +92,36 @@ class Object:
         ]
         return list(dict.fromkeys(filter(None, x)))
 
-    def predict_page_printed_number(self, object_list):
+    def predict_page_printed_number(self, object_list, last_page_detected):
         result = ""
         index = object_list.index(self)
+        max_1_8 = int(len(object_list) / 8)
         next_index = index + 1
         if index < len(object_list):
+            # for greater than last_page_detected
             for text in self.texts():
                 if text.isnumeric():
-                    expected_next_printed_page = str(int(text) + 1)
-                    if self.is_next_page_matched(object_list[next_index], expected_next_printed_page):
-                        self.expected_next_printed_page = expected_next_printed_page
-                        result = text
-                        break
+                    if int(text) > last_page_detected:
+                        expected_next_printed_page = str(int(text) + 1)
+                        if self.is_next_page_matched(object_list[next_index], expected_next_printed_page):
+                            self.expected_next_printed_page = expected_next_printed_page
+                            result = text
+                            break
+            # for less than last_page_detected
             else:
+                for text in self.texts():
+                    if text.isnumeric():
+                        expected_next_printed_page = str(int(text) + 1)
+                        if self.is_next_page_matched(object_list[next_index], expected_next_printed_page):
+                            self.expected_next_printed_page = expected_next_printed_page
+                            result = text
+                            break
+
+        #added 11-MAR-2020
+        if result == "1":
+            if last_page_detected == 0 or index < max_1_8:
                 result = ""
+
         if not result and index > 0:
             previous_object = object_list[index-1]
             tmp = previous_object.get_next_candidate()
