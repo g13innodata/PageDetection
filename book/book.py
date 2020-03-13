@@ -64,7 +64,7 @@ class Book:
         self.__perform_fillup_no_page_numbers()
 
 
-        self.__print_pages("After final prediction!")
+        # self.__print_pages("After final prediction!")
 
     def __debug_note_pages(self, header):
         self.csv_header += ',' + header + ',Conf'
