@@ -1,4 +1,5 @@
-import xml.etree.ElementTree as ET
+# import xml.etree.ElementTree as ET
+import xml.etree.cElementTree as ET
 import json
 import os
 import sys
@@ -9,14 +10,17 @@ from .scan_data import ScanData
 
 class Book:
     def __init__(self, xml_filename):
-        tree = ET.parse(xml_filename)
-        root = tree.getroot()
+        # tree = ET.parse(xml_filename)
+        # root = tree.getroot()
         self.xml_filename = xml_filename
         self.object_list = []
         self.blank_gap_dictionary = {}
         self.last_blank_start = 0
         expected_leaf_no = 1
-        for object_element in root.iter('OBJECT'):
+        for event, object_element in ET.iterparse(xml_filename):
+            if object_element.tag != "OBJECT":
+                continue
+
             object_ = Object(object_element)
             object_.extract_words()
             object_.extract_possible_page_numbers()
