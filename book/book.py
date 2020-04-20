@@ -1,4 +1,3 @@
-# import xml.etree.ElementTree as ET
 import xml.etree.cElementTree as ET
 import json
 import os
