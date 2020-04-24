@@ -15,12 +15,22 @@ class Book:
         self.object_list = []
         self.blank_gap_dictionary = {}
         self.last_blank_start = 0
+        self.has_valid_leaf_no = True
+
         expected_leaf_no = 1
         for event, object_element in ET.iterparse(xml_filename):
             if object_element.tag != "OBJECT":
                 continue
 
             object_ = Object(object_element)
+
+            # Start: added 4/23/2020
+            # Terminate the application once a page has encountered an invalid leaf no
+            self.has_valid_leaf_no = object_.has_valid_leaf_no
+            if not self.has_valid_leaf_no:
+                break
+            # End: added 4/23/2020
+
             object_.extract_words()
             object_.extract_possible_page_numbers()
             # Start: added 2/14
@@ -32,6 +42,12 @@ class Book:
             # End: added 2/14
             self.object_list.append(object_)
             expected_leaf_no = object_.leaf_number + 1
+
+        # Start: added 4/23/2020
+        # Terminate the application once a page has invalid leaf no
+        if not self.has_valid_leaf_no:
+            return
+        # End: added 4/23/2020
 
         self.csv_header = 'Leaf,OCR'
         #STEP 1: do prediction based on previous, current, and next page

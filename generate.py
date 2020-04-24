@@ -90,16 +90,21 @@ def main(item: str, **kwargs):
     # Do auto printed page generation
     if os.path.isfile(xml_file_name):
         if os.path.exists(json_file_name):
-                os.remove(json_file_name)
-                
-        print("Generating printed pages...")
+            os.remove(json_file_name)  
+
+        print("Generating printed pages...")          
         bk = Book(xml_file_name)
+        if not bk.has_valid_leaf_no:
+            print("djvu error: unable to extract leaf number.")
+            return
+
         scan_data = ScanData("")
         #if xml_file_name_scan_data is not None:
         #    if os.path.isfile(xml_file_name_scan_data):
         #        scan_data = ScanData(xml_file_name_scan_data)
 
         bk.generate_json(item, json_file_name, scan_data=scan_data)
+        
     else:
         print("Error: File not found [" + xml_file_name + "]!")
 
@@ -112,11 +117,15 @@ if __name__ == "__main__":
     parser.add_argument('-xml_filename_scandata', help="input scandata", required=False)
     parser.add_argument('-json_filename', help="json output", required=False)
     args = parser.parse_args()
-    # item = "appletonsannualc0007unse"
+    # item = "187718791880abst00free"
     item = args.item
     ia_path = args.ia_path
     xml_filename = args.xml_filename
     xml_filename_scandata = args.xml_filename_scandata
     json_filename = args.json_filename
-    main(item, ia_path=ia_path, xml_filename=xml_filename, xml_filename_scandata=xml_filename_scandata,
-         json_filename=json_filename)
+
+    try:
+        main(item, ia_path=ia_path, xml_filename=xml_filename, xml_filename_scandata=xml_filename_scandata,
+             json_filename=json_filename)
+    except:
+        print("ERROR: Unhandled exception Error")

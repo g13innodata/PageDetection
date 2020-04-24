@@ -28,6 +28,7 @@ class Object:
         self.page_height = 0
         self.page_height = 0
         self.page_width = 0
+        self.has_valid_leaf_no = True
 
         self.debug_page = []
         self.debug_conf = []
@@ -43,10 +44,25 @@ class Object:
             pass
         if param_page is not None:
             if param_page != -1:
-                page_value = param_page.attrib["value"]
+                page_value = param_page.attrib["value"].lower()
+                if "." in page_value:
+                    page_value = page_value[0:page_value.rindex(".")]
+
+                split_ = page_value.split("_")
+                try:
+                    self.leaf_number = int(split_[len(split_) - 1])
+                except():
+                    self.leaf_number = 0
+
+                self.has_valid_leaf_no = False if self.leaf_number == 0 else True
+                ''' page_value = param_page.attrib["value"]
                 page_value = page_value[0:page_value.index(".")]
                 split_ = page_value.split("_")
-                self.leaf_number = int(split_[len(split_)-1])
+                try:
+                    self.leaf_number = int(split_[len(split_)-1])
+                except ValueError:
+                    self.leaf_number = 0
+                    self.has_valid_leaf_no = False '''
 
     # extract all the WORD tags and put it in a list
     def extract_words(self):
