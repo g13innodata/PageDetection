@@ -1,6 +1,7 @@
 import xml.etree.cElementTree as ET
 import json
 import os
+import re
 import sys
 from .object import Object
 from .number_helper import NumberHelper
@@ -8,21 +9,26 @@ from .scan_data import ScanData
 
 
 class Book:
-    def __init__(self, xml_filename):
+    def __init__(self):
         # tree = ET.parse(xml_filename)
         # root = tree.getroot()
-        self.xml_filename = xml_filename
+        self.xml_filename = None
         self.object_list = []
         self.blank_gap_dictionary = {}
         self.last_blank_start = 0
         self.has_valid_leaf_no = True
 
+    def load_xml(self, xml_filename):
+        self.xml_filename = xml_filename
         expected_leaf_no = 1
         for event, object_element in ET.iterparse(xml_filename):
             if object_element.tag != "OBJECT":
                 continue
 
-            object_ = Object(object_element)
+            object_ = Object()
+            object_.load_object(object_element)
+            if object_.leaf_number == 0:
+                continue
 
             # Start: added 4/23/2020
             # Terminate the application once a page has encountered an invalid leaf no
@@ -36,7 +42,7 @@ class Book:
             # Start: added 2/14
             if object_.leaf_number != expected_leaf_no:
                 for i in range(expected_leaf_no, object_.leaf_number):
-                    t_object = Object("")
+                    t_object = Object()
                     t_object.leaf_number = i
                     self.object_list.append(t_object)
             # End: added 2/14
@@ -48,7 +54,42 @@ class Book:
         if not self.has_valid_leaf_no:
             return
         # End: added 4/23/2020
+        self.__start_prediction()
 
+    def load_test(self, test_file_name):
+        self.xml_filename = test_file_name
+        f = open(test_file_name, 'r')
+        content = f.read()
+        f.close()
+        splits = content.split("Scandata says:")
+        expected_leaf_no = 1
+        for split in splits:
+            leaf_num = 0
+            ocr_value = ""
+            start_capture_ocr = False
+            lines = split.split("\n")
+            for line in lines:
+                if start_capture_ocr:
+                    ocr_value = line
+                    start_capture_ocr = False
+                if line.startswith("Leaf number: "):
+                    leaf_num = int(line.replace("Leaf number: ", ""))
+                elif line == "OCR Value:":
+                    start_capture_ocr = True
+            if leaf_num != 0:
+                object_ = Object()
+                object_.load_test(leaf_num, ocr_value)
+                if object_.leaf_number != expected_leaf_no:
+                    for i in range(expected_leaf_no, object_.leaf_number):
+                        t_object = Object("")
+                        t_object.leaf_number = i
+                        self.object_list.append(t_object)
+                # End: added 2/14
+                self.object_list.append(object_)
+                expected_leaf_no = object_.leaf_number + 1
+        self.__start_prediction()
+
+    def __start_prediction(self):
         self.csv_header = 'Leaf,OCR'
         #STEP 1: do prediction based on previous, current, and next page
         self.__perform_initial_prediction()
@@ -77,13 +118,10 @@ class Book:
         self.__perform_fillup_roman_numerals()
         self.__debug_note_pages('RomanN')
 
-
-
         #STEP 6: in a case no page numbers predicted at all, use the leaf number
         self.__perform_fillup_no_page_numbers()
 
-
-        # self.__print_pages("After final prediction!")
+        #self.__print_pages("After final prediction!")
 
     def __debug_note_pages(self, header):
         self.csv_header += ',' + header + ',Conf'
@@ -95,7 +133,7 @@ class Book:
     #temporary routine to print details in the console
     def __print_pages(self, caption):
         application_path = os.path.dirname(self.xml_filename)
-        csv_file_name = self.xml_filename.lower().replace("_djvu.xml", "_debug.csv")
+        csv_file_name = self.xml_filename.lower().replace("_djvu.xml", "_debug") + ".csv"
         #csv_file_name = os.path.join(application_path, os.path.filena "debug.csv")
         f = open(csv_file_name, 'w+')
         #csv_line = 'Leaf,OCR, Initial,Conf, GAP1,Conf,GAP2C, Conf, Roman, Conf, Blanks, Conf\n'

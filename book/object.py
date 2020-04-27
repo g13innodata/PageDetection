@@ -9,8 +9,8 @@ from collections import OrderedDict
 # Nov 28: Eliminate non-numeric and non-roman words
 
 class Object:
-    def __init__(self, object_element: ET.Element):
-        self.object_element = object_element
+    def __init__(self):
+        self.object_element = None
         self.predicted_page_temp = ""
         self.word_list = []
         self.candidate_printed_page = ""
@@ -33,6 +33,8 @@ class Object:
         self.debug_page = []
         self.debug_conf = []
 
+    def load_object(self, object_element: ET.Element):
+        self.object_element = object_element
         param_page = object_element.find("PARAM[@name='PAGE']")
         try:
             self.page_height = int(object_element.attrib["height"])
@@ -55,14 +57,26 @@ class Object:
                     self.leaf_number = 0
 
                 self.has_valid_leaf_no = False if self.leaf_number == 0 else True
-                ''' page_value = param_page.attrib["value"]
-                page_value = page_value[0:page_value.index(".")]
-                split_ = page_value.split("_")
-                try:
-                    self.leaf_number = int(split_[len(split_)-1])
-                except ValueError:
-                    self.leaf_number = 0
-                    self.has_valid_leaf_no = False '''
+
+    # for testing purposes
+    def load_test(self, leaf_number, ocr_value):
+        self.leaf_number = leaf_number
+        ocrs = ocr_value.split(', ')
+        ctr =0
+        for ocr in ocrs:
+            ctr += 1
+            if ctr == 1:
+                self.text_UL = ocr
+            elif ctr == 2:
+                self.text_UM = ocr
+            elif ctr == 3:
+                self.text_UR = ocr
+            elif ctr == 4:
+                self.text_LL = ocr
+            elif ctr == 5:
+                self.text_LM = ocr
+            elif ctr == 6:
+                self.text_LR = ocr
 
     # extract all the WORD tags and put it in a list
     def extract_words(self):

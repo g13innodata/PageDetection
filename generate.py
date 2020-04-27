@@ -92,8 +92,11 @@ def main(item: str, **kwargs):
         if os.path.exists(json_file_name):
             os.remove(json_file_name)  
 
-        print("Generating printed pages...")          
-        bk = Book(xml_file_name)
+        print("Generating printed pages...")
+
+        bk = Book()
+        bk.load_xml(xml_file_name)
+
         if not bk.has_valid_leaf_no:
             print("djvu error: unable to extract leaf number.")
             return
@@ -117,7 +120,7 @@ if __name__ == "__main__":
     parser.add_argument('-xml_filename_scandata', help="input scandata", required=False)
     parser.add_argument('-json_filename', help="json output", required=False)
     args = parser.parse_args()
-    # item = "187718791880abst00free"
+    # item = "1964-His-SJC-0001"
     item = args.item
     ia_path = args.ia_path
     xml_filename = args.xml_filename
@@ -126,6 +129,6 @@ if __name__ == "__main__":
 
     try:
         main(item, ia_path=ia_path, xml_filename=xml_filename, xml_filename_scandata=xml_filename_scandata,
-             json_filename=json_filename)
-    except:
-        print("ERROR: Unhandled exception Error")
+            json_filename=json_filename)
+    except Exception as e:
+        print("ERROR: " + str(e))
