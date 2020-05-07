@@ -130,7 +130,7 @@ class Object:
         if index < len(object_list):
             # for greater than last_page_detected
             for text in self.texts():
-                if text.isnumeric():
+                if text.isdigit():
                     if int(text) > last_page_detected:
                         expected_next_printed_page = str(int(text) + 1)
                         if self.is_next_page_matched(object_list[next_index], expected_next_printed_page):
@@ -140,7 +140,7 @@ class Object:
             # for less than last_page_detected
             else:
                 for text in self.texts():
-                    if text.isnumeric():
+                    if text.isdigit():
                         expected_next_printed_page = str(int(text) + 1)
                         if self.is_next_page_matched(object_list[next_index], expected_next_printed_page):
                             self.expected_next_printed_page = expected_next_printed_page
@@ -156,7 +156,7 @@ class Object:
             previous_object = object_list[index-1]
             tmp = previous_object.get_next_candidate()
             for text in self.texts():
-                if text.isnumeric():
+                if text.isdigit():
                     if text == tmp:
                         result = text
                         break
@@ -171,7 +171,7 @@ class Object:
             val = self.candidate_printed_page
         if val == None:
             val = ""
-        if val.isnumeric():
+        if val.isdigit():
             return str(int(val) + 1)
         elif NumberHelper.is_valid_roman_numeral(val):
             return ""
@@ -208,8 +208,7 @@ class Object:
             .replace('*', '') \
             .replace('(', '') \
             .replace(')', '')
-
-        if result.isnumeric():
+        if result.isdigit():
             # validate if greater than the leaf number
             if int(result) == 0:
                 result = ""
@@ -223,7 +222,7 @@ class Object:
             result = result.replace('!', '1')
             result = result.replace('J', '9')
 
-        if not result.isnumeric() and not NumberHelper.is_valid_roman_numeral(result):
+        if not result.isdigit() and not NumberHelper.is_valid_roman_numeral(result):
             result = ""
 
         result = result.strip()
