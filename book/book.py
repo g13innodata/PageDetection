@@ -152,7 +152,7 @@ class Book:
         f.write(self.csv_header + '\n')
         prev_page = 0
         for obj in self.object_list:
-            if obj.predicted_page_temp.isdigit():
+            if NumberHelper.is_numeric(obj.predicted_page_temp):
                 prev_page = int(obj.predicted_page_temp)
             csv_line = str(obj.leaf_number) + ',"[' + ','.join(obj.texts()) + ']"'
             for i in range(0, len(obj.debug_page)):
@@ -201,7 +201,7 @@ class Book:
             if self.object_list[i].predicted_page_temp == "":
                 for j in range(i+1, len(self.object_list)-2):
                     for text in self.object_list[i].texts():
-                        if text.isdigit():
+                        if NumberHelper.is_numeric(text):
                             expected_next_printed_page = str(int(text) + gap)
                             if self.object_list[i].is_next_page_matched(self.object_list[j], expected_next_printed_page):
                                 self.object_list[i].predicted_page_temp = text
@@ -236,7 +236,7 @@ class Book:
                 if start_candidate == None:
                     start_candidate = ""
                 end_candidate = self.object_list[blank_end].candidate_printed_page
-                if start_candidate.isdigit() and end_candidate.isdigit():
+                if NumberHelper.is_numeric(start_candidate) and NumberHelper.is_numeric(end_candidate):
                     if str(int(start_candidate)-1) == self.object_list[blank_start-1].predicted_page_temp \
                             and str(int(end_candidate)+1) == self.object_list[blank_end+1].predicted_page_temp:
                         for i in range(blank_start, blank_end + 1):
@@ -276,8 +276,8 @@ class Book:
         # - page number is +1 from previous
         for i in range(1, len(self.object_list)):
             if self.object_list[i].confidence == 0 and self.object_list[i-1].confidence == 100 and \
-                    self.object_list[i].predicted_page_temp.isdigit() and \
-                    self.object_list[i-1].predicted_page_temp.isdigit():
+                    NumberHelper.is_numeric(self.object_list[i].predicted_page_temp) and \
+                    NumberHelper.is_numeric(self.object_list[i-1].predicted_page_temp):
                 if self.object_list[i].predicted_page_temp in self.object_list[i].texts() and \
                         int(self.object_list[i].predicted_page_temp) == int(self.object_list[i-1].predicted_page_temp) \
                         + 1:
@@ -289,8 +289,8 @@ class Book:
         #    - page number is -1 from next
         for i in range(len(self.object_list)-2, -1, -1):
             if self.object_list[i].confidence == 0 and self.object_list[i+1].confidence == 100 and \
-                    self.object_list[i].predicted_page_temp.isdigit() and \
-                    self.object_list[i+1].predicted_page_temp.isdigit():
+                    NumberHelper.is_numeric(self.object_list[i].predicted_page_temp) and \
+                    NumberHelper.is_numeric(self.object_list[i+1].predicted_page_temp):
                 if self.object_list[i].predicted_page_temp in self.object_list[i].texts() and \
                         int(self.object_list[i].predicted_page_temp) == int(self.object_list[i+1].predicted_page_temp) \
                         - 1:
@@ -328,7 +328,7 @@ class Book:
     #set the leaf number to 100% confidence if it can match to the next max_match
     def __get_confidence_forward(self, leaf_number, page_number, max_match):
         result = 0
-        if (page_number.isdigit()):
+        if NumberHelper.is_numeric(page_number):
             match_counter = 0
             expected_page_number = int(page_number) + 1
             for i in range(leaf_number, len(self.object_list)):
@@ -345,7 +345,7 @@ class Book:
     def __get_confidence_backward(self, leaf_number, page_number, max_match):
         result = 0
 
-        if (page_number.isdigit()):
+        if NumberHelper.is_numeric(page_number):
             match_counter = 0
             expected_page_number = int(page_number) - 1
             for i in range(leaf_number-2, 0, -1):
@@ -388,7 +388,7 @@ class Book:
                         #should solve 101,102,blank,blank,103,104,blank,blank,105,106
                         if not is_set_100:
                             for j in range(blank_start, blank_end + 1):
-                                if self.object_list[j].predicted_page_temp.isdigit():
+                                if NumberHelper.is_numeric(self.object_list[j].predicted_page_temp):
                                     if (int(self.object_list[j].predicted_page_temp) > printed_start) and \
                                             (int(self.object_list[j].predicted_page_temp) < printed_end):
                                         pass
@@ -419,10 +419,10 @@ class Book:
     #get the lower index that the page number matches with computed value from the starting index or idx100
     def __get_lower_index(self, idx100):
         result = -1
-        if self.object_list[idx100].predicted_page_temp.isdigit():
+        if NumberHelper.is_numeric(self.object_list[idx100].predicted_page_temp):
             page_number_idx100 = int(self.object_list[idx100].predicted_page_temp)
             for i in range(idx100-1, -1, -1):
-                if self.object_list[i].predicted_page_temp.isdigit():
+                if NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                     page_number_lower = int(self.object_list[i].predicted_page_temp)
                     if page_number_lower < page_number_idx100:
                         if self.__get_confidence_backward(self.object_list[i].leaf_number,
@@ -439,7 +439,7 @@ class Book:
         result = -1
         page_number_idx100 = int(self.object_list[idx100].predicted_page_temp)
         for i in range(idx100+1, len(self.object_list)):
-            if self.object_list[i].predicted_page_temp.isdigit():
+            if NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                 page_number_higher = int(self.object_list[i].predicted_page_temp)
                 if page_number_higher > page_number_idx100:
                     if self.__get_confidence_forward(self.object_list[i].leaf_number,
@@ -462,7 +462,7 @@ class Book:
                     pg_start = int(self.object_list[lower_idx].predicted_page_temp)
                     pg_end = int(self.object_list[idx].predicted_page_temp)
                     for i in range(lower_idx+1, idx):
-                        if self.object_list[i].predicted_page_temp.isdigit():
+                        if NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                             if not int(self.object_list[i].predicted_page_temp) in range(pg_start, pg_end):
                                 self.object_list[i].predicted_page_temp = ""
                 else:
@@ -481,7 +481,7 @@ class Book:
                     pg_start = int(self.object_list[idx].predicted_page_temp)
                     pg_end = int(self.object_list[higher_idx].predicted_page_temp)
                     for i in range(idx+1, higher_idx):
-                        if self.object_list[i].predicted_page_temp.isdigit():
+                        if NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                             if not int(self.object_list[i].predicted_page_temp) in range(pg_start, pg_end):
                                 self.object_list[i].predicted_page_temp = ""
                 else:
@@ -494,14 +494,14 @@ class Book:
         start_100 = -1
         blank_started = False
         for i in range(0, len(self.object_list)):
-            if self.object_list[i].predicted_page_temp.isdigit():
+            if NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                 if blank_started == False:
                     start_100 = i
                 elif blank_started == True:
                     self.blank_gap_dictionary[start_100] = i
                     start_100 = -1
                     blank_started = False
-            if start_100 != -1 and not self.object_list[i].predicted_page_temp.isdigit():
+            if start_100 != -1 and not NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                 blank_started = True
 
         for blank in self.blank_gap_dictionary:
@@ -602,7 +602,7 @@ class Book:
         # update blanks in sequence from last
         last_printed = ""
         for x in range(1, len(self.object_list)):
-            if self.object_list[x].predicted_page_temp == "" and last_printed.isdigit():
+            if self.object_list[x].predicted_page_temp == "" and NumberHelper.is_numeric(last_printed):
                 next_printed = int(last_printed) + 1
                 self.object_list[x].predicted_page_temp = str(next_printed)
             last_printed = self.object_list[x].predicted_page_temp
@@ -623,7 +623,7 @@ class Book:
         initial_count = 0
         for x in range(1, len(self.object_list)):
             initial_count += 1
-            if self.object_list[x].predicted_page_temp.isdigit():
+            if NumberHelper.is_numeric(self.object_list[x].predicted_page_temp):
                 if int(self.object_list[x].predicted_page_temp) < initial_count:
                     page_number = int(self.object_list[x].predicted_page_temp) - 1
                     if page_number >= 1:
@@ -631,7 +631,7 @@ class Book:
                             if page_number < 1:
                                 # TEMPORARY: SET TO 0 INSTEAD OF 100
                                 # self.object_list[j].confidence = 0
-                                if self.object_list[j].predicted_page_temp.isdigit() or \
+                                if NumberHelper.is_numeric(self.object_list[j].predicted_page_temp) or \
                                         self.object_list[j].predicted_page_temp == "":
                                     self.object_list[j].predicted_page_temp = ""
                             else:
@@ -662,11 +662,11 @@ class Book:
         #Added 10-MAR-2019
         # 100, 1, 2, 3, 4, 5, 6, 7, 8 change to 100 ... 108
         for i in range(0, len(self.object_list)):
-            if self.object_list[i].predicted_page_temp.isdigit():
+            if NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                 start_next_page = int(self.object_list[i].predicted_page_temp) + 1
                 next_page = start_next_page
                 for j in range(i + 1, len(self.object_list)):
-                    if self.object_list[j].confidence == 0 and self.object_list[j].predicted_page_temp.isdigit():
+                    if self.object_list[j].confidence == 0 and NumberHelper.is_numeric(self.object_list[j].predicted_page_temp):
                         if str(next_page).endswith(self.object_list[j].predicted_page_temp) and \
                                 int(self.object_list[j].predicted_page_temp) < next_page:
                             self.object_list[j].predicted_page_temp = str(next_page)
@@ -743,7 +743,7 @@ class Book:
                 base_index = 0
                 gap_leaf = 1
                 for i in range(index_100-1, -1, -1):
-                    if self.object_list[i].predicted_page_temp.isdigit():
+                    if NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                         current_page = int(self.object_list[i].predicted_page_temp)
                         if current_page < base_page and base_page-current_page+gap_leaf_tolerance >= gap_leaf:
                             base_page = current_page
@@ -761,7 +761,7 @@ class Book:
                 #Resequencing
                 last_printed = ""
                 for x in range(0, index_100):
-                    if self.object_list[x].predicted_page_temp == "" and last_printed.isdigit():
+                    if self.object_list[x].predicted_page_temp == "" and NumberHelper.is_numeric(last_printed):
                         next_printed = int(last_printed) + 1
                         self.object_list[x].predicted_page_temp = str(next_printed)
                     last_printed = self.object_list[x].predicted_page_temp
@@ -811,7 +811,7 @@ class Book:
                                 pg_start = int(self.object_list[start_100].predicted_page_temp)
                                 pg_end = int(self.object_list[end_100].predicted_page_temp)
                                 for j in range(start_100 + 1, end_100):
-                                    if self.object_list[j].predicted_page_temp.isdigit():
+                                    if NumberHelper.is_numeric(self.object_list[j].predicted_page_temp):
                                         pg = int(self.object_list[j].predicted_page_temp)
                                         if pg < pg_start or pg > pg_end:
                                             self.object_list[j].predicted_page_temp = ""
@@ -824,7 +824,7 @@ class Book:
             # update blanks in sequence from last
             last_printed = ""
             for x in range(1, len(self.object_list)):
-                if self.object_list[x].predicted_page_temp == "" and last_printed.isdigit():
+                if self.object_list[x].predicted_page_temp == "" and NumberHelper.is_numeric(last_printed):
                     next_printed = int(last_printed) + 1
                     self.object_list[x].predicted_page_temp = str(next_printed)
                 last_printed = self.object_list[x].predicted_page_temp
@@ -861,12 +861,12 @@ class Book:
         else:
             last_seq_match_count = 1
             for i in range(0, len(self.object_list)):
-                if self.object_list[i].predicted_page_temp.isdigit():
+                if NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                     start_num = int(self.object_list[i].predicted_page_temp)
                     expected_next_num = start_num + 1
                     seq_match_count = 0
                     for j in range(i+1, len(self.object_list)):
-                        if self.object_list[j].predicted_page_temp.isdigit():
+                        if NumberHelper.is_numeric(self.object_list[j].predicted_page_temp):
                             next_num = int(self.object_list[j].predicted_page_temp)
                             if next_num == expected_next_num:
                                 seq_match_count += 1
@@ -878,7 +878,7 @@ class Book:
                             is_date = True
                     else:
                         if start_num > date_indicator:
-                            if self.object_list[i-1].predicted_page_temp.isdigit():
+                            if NumberHelper.is_numeric(self.object_list[i-1].predicted_page_temp):
                                 if int(self.object_list[i-1].predicted_page_temp) < date_indicator:
                                     is_date = True
 
@@ -889,7 +889,7 @@ class Book:
                         old_num = self.object_list[i].predicted_page_temp
                         self.object_list[i].predicted_page_temp = ""
                         if i > 0:
-                            if self.object_list[i-1].predicted_page_temp.isdigit():
+                            if NumberHelper.is_numeric(self.object_list[i-1].predicted_page_temp):
                                 self.object_list[i].predicted_page_temp = str(int(self.object_list[i-1].predicted_page_temp) + 1)
                                 seq_match_count = last_seq_match_count - 1
                                 #if old_num != self.object_list[i].predicted_page_temp:
@@ -900,7 +900,7 @@ class Book:
                         last_seq_match_count = 1
                 else:
                     if i > 0:
-                        if self.object_list[i - 1].predicted_page_temp.isdigit():
+                        if NumberHelper.is_numeric(self.object_list[i - 1].predicted_page_temp):
                             self.object_list[i].predicted_page_temp = str(
                                 int(self.object_list[i - 1].predicted_page_temp) + 1)
 
@@ -927,7 +927,7 @@ class Book:
                                        "ocr_value": object_.texts(),
                                        "confidence": object_.confidence,
                                        "pageNumber": object_.predicted_page_temp})))
-            if object_.predicted_page_temp.isdigit():
+            if NumberHelper.is_numeric(object_.predicted_page_temp):
                 confidence = object_.confidence
                 next_confidence = confidence
                 if object_.leaf_number < len(self.object_list):
@@ -937,10 +937,10 @@ class Book:
 
         #search for unsequence numbers
         for i in range(0, len(self.object_list)):
-            if self.object_list[i].predicted_page_temp.isdigit():
+            if NumberHelper.is_numeric(self.object_list[i].predicted_page_temp):
                 page_num = self.object_list[i].predicted_page_temp
                 for j in range(0, len(self.object_list)):
-                    if self.object_list[j].predicted_page_temp.isdigit() and i != j:
+                    if NumberHelper.is_numeric(self.object_list[j].predicted_page_temp) and i != j:
                         page_num2 = self.object_list[j].predicted_page_temp
                         if page_num == page_num2:
                             if self.object_list[i].leaf_number not in check_leaf:

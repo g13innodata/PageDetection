@@ -26,6 +26,14 @@ class NumberHelper:
             return 0
 
     @staticmethod
+    def is_numeric(str):
+        pattern = "^[0-9]+$"
+        if str.strip():
+            if re.search(pattern, str):
+                return True
+        return False
+
+    @staticmethod
     def int_to_roman(num)->str:
         val = [
             1000, 900, 500, 400,
@@ -47,3 +55,4 @@ class NumberHelper:
                 num -= val[i]
             i += 1
         return roman_num
+
