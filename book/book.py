@@ -95,6 +95,7 @@ class Book:
     def __start_prediction(self):
         self.csv_header = 'Leaf,OCR'
         #STEP 1: do prediction based on previous, current, and next page
+
         self.__perform_initial_prediction()
         self.__debug_note_pages('Pred1')
 
@@ -123,6 +124,7 @@ class Book:
 
         #STEP 6: in a case no page numbers predicted at all, use the leaf number
         self.__perform_fillup_no_page_numbers()
+
 
         #STEP 7: added additional validation for zero confidence (all pages) results (twice)
         self.__perform_zero_confidence_fix()
@@ -634,11 +636,14 @@ class Book:
                                 if NumberHelper.is_numeric(self.object_list[j].predicted_page_temp) or \
                                         self.object_list[j].predicted_page_temp == "":
                                     self.object_list[j].predicted_page_temp = ""
+                                    # Added 8/14/2020
+                                    self.object_list[j].confidence = 0
                             else:
                                 self.object_list[j].predicted_page_temp = str(page_number)
                                 self.object_list[j].confidence = 0
                             page_number -= 1
                 break
+
 
         # Added 10-MAR-2019
         # 100, 0, 0, 102 or 100,0,0,0,0,105
