@@ -799,7 +799,8 @@ class Book:
         if count_100 > 1:
             perc_100 = int((count_100 / len(self.object_list)) * 100)
             unseq_perc = 0
-            if count_unseq > 0:
+            #Updated 9/14/2020 added 'and perc_100 > 0
+            if count_unseq > 0 and perc_100 > 0:
                 unseq_perc = int((count_unseq / perc_100) * 100)
             if perc_100 > 50 and unseq_perc <= 5:
                 start_100 = -1
