@@ -317,3 +317,42 @@ class Object:
 
         result = self.__filter_text(result)
         return result
+
+
+    # Start: added 4/21/2021
+    def remove_noise_pages(self, pg):
+        if self.text_UL == pg:
+            self.text_UL = ""
+        if self.text_UM == pg:
+            self.text_UM = ""
+        if self.text_UR == pg:
+            self.text_UR = ""
+        if self.text_LL == pg:
+            self.text_LL = ""
+        if self.text_LM == pg:
+            self.text_LM = ""
+        if self.text_LR == pg:
+            self.text_LR = ""
+
+
+    def remove_noise_above_1500(self):
+        if NumberHelper.is_numeric(self.text_UL):
+            if int(self.text_UL) > 1500:
+                self.text_UL = ""
+        if NumberHelper.is_numeric(self.text_UM):
+            if int(self.text_UM) > 1500:
+                self.text_UM = ""
+        if NumberHelper.is_numeric(self.text_UR):
+            if int(self.text_UR) > 1500:
+                self.text_UR = ""
+        if NumberHelper.is_numeric(self.text_LL):
+            if int(self.text_LL) > 1500:
+                self.text_LL = ""
+        if NumberHelper.is_numeric(self.text_LM):
+            if int(self.text_LM) > 1500:
+                self.text_LM = ""
+        if NumberHelper.is_numeric(self.text_LR):
+            if int(self.text_LR) > 1500:
+                self.text_LR = ""
+
+    # End: added 4/21/2021

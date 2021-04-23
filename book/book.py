@@ -32,7 +32,6 @@ class Book:
             object_.load_object(object_element)
             if object_.leaf_number == 0:
                 continue
-
             # Start: added 4/23/2020
             # Terminate the application once a page has encountered an invalid leaf no
             self.has_valid_leaf_no = object_.has_valid_leaf_no
@@ -58,6 +57,55 @@ class Book:
             return
         # End: added 4/23/2020
         self.__start_prediction()
+
+        # Start: added 4/21/2021
+        # Remove noise if zero confidence and try to do second round prediction
+        if self.__is_all_zero_confidence():
+            self.__remove_noise_page_numbers()
+            self.__start_prediction()
+        # End: added 4/21/2021
+
+    # Start: Added 4/21/2021
+    def __is_all_zero_confidence(self):
+        result = True
+        for obj in self.object_list:
+            if obj.confidence > 0:
+                result = False
+                break
+        return result
+
+    def __remove_noise_page_numbers(self):
+        dictionary_pages = {}
+        # pages 1-1000; 1001-2000; 2001 and up
+        dictionary_ranges = {1: 0, 1501: 0}
+        max_below_1500 = 0
+        below_1000 = 0
+        for obj in self.object_list:
+            obj.predicted_page_temp = ""
+            for pg in obj.texts():
+                if pg in dictionary_pages:
+                    dictionary_pages[pg] += 1
+                else:
+                    dictionary_pages[pg] = 1
+        for key, value in sorted(dictionary_pages.items(), key=lambda item: item[1], reverse=True):
+            # remove any probable ocr page numbers that repeats more than twice
+            if NumberHelper.is_numeric(str(key)):
+                if int(key) > 1500:
+                    dictionary_ranges[1501] += 1
+                else:
+                    dictionary_ranges[1] += 1
+                    if int(key) > max_below_1500:
+                        max_below_1500 = int(key)
+                    if int(key) < 1000:
+                        below_1000 += 1
+            if value > 2:
+                for obj in self.object_list:
+                    obj.remove_noise_pages(key)
+        if dictionary_ranges[1501] < dictionary_ranges[1]:
+            if below_1000 > dictionary_ranges[1] * .9 or 1500-max_below_1500 > 200:
+                for obj in self.object_list:
+                    obj.remove_noise_above_1500()
+    # End: added 4/21/2021
 
     def load_test(self, test_file_name):
         self.xml_filename = test_file_name
@@ -135,7 +183,9 @@ class Book:
 
         self.__debug_note_pages('Granular')
 
-        #self.__print_pages("After final prediction!")
+        # Notes: Disable this line in Production mode
+        #        This is to generate CSV file for analysis
+        # self.__print_pages("After final prediction!")
 
     def __debug_note_pages(self, header):
         self.csv_header += ',' + header + ',Conf'
