@@ -5,13 +5,17 @@ from .number_helper import NumberHelper
 
 class Word:
     def __init__(self, word_element: ET.Element):
+        self.is_page_candidate = False
+        # start: added 4/30/2021
+        if 'coords' not in word_element.attrib:
+            return
+        # end: added 4/30/2021
         coords = word_element.attrib["coords"].split(",")
         self.x1 = int(coords[0])
         self.y2 = int(coords[1])
         self.x2 = int(coords[2])
         self.y1 = int(coords[3])
         self.text = word_element.text.strip()
-        self.is_page_candidate = False
         if len(self.text) <= 5:
             if NumberHelper.is_valid_roman_numeral(self.text):
                 self.is_page_candidate = True
